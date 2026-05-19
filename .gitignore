@@ -29,3 +29,6 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# Challenge runtime evidence (regenerated per run, see challenges/cache_describe_challenge.sh)
+challenges/.last-run/

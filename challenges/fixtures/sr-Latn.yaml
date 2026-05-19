@@ -1,0 +1,17 @@
+# challenges/fixtures/sr-Latn.yaml
+#
+# Serbian-Latin locale fixture for the Cache describe-Challenge runner.
+#
+# Mirror of en.yaml — same message IDs, locale-correct Serbian strings.
+# Cross-locale sanity check asserts every value differs from the EN
+# counterpart to rule out NoopTranslator regression.
+
+cache.state.empty: "Keš je prazan"
+cache.state.populated: "Keš sadrži unose"
+cache.state.evicted: "Keš je izbacio unose"
+cache.state.expired: "Keš ima istekle unose"
+cache.policy.lru: "Najmanje skoro korišćeno izbacivanje"
+cache.policy.lfu: "Najmanje često korišćeno izbacivanje"
+cache.policy.fifo: "Prvo unutra prvo napolje izbacivanje"
+cache.ttl.fixed: "Fiksni TTL od {{.Duration}}"
+cache.ttl.sliding: "Klizni TTL od {{.Duration}}"

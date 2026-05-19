@@ -1,0 +1,20 @@
+# challenges/fixtures/en.yaml
+#
+# English locale fixture for the Cache describe-Challenge runner.
+#
+# Maps stable cache-state message IDs to user-facing English strings.
+# The runner asserts every Describe() output equals the expected
+# string verbatim — a regression that drifts the strings is loud.
+#
+# Hardcoded here ON PURPOSE — fixtures + test assertions are not
+# user-facing application text (CONST-046 carve-out).
+
+cache.state.empty: "Cache is empty"
+cache.state.populated: "Cache has entries"
+cache.state.evicted: "Cache evicted entries"
+cache.state.expired: "Cache has expired entries"
+cache.policy.lru: "Least Recently Used eviction"
+cache.policy.lfu: "Least Frequently Used eviction"
+cache.policy.fifo: "First In First Out eviction"
+cache.ttl.fixed: "Fixed TTL of {{.Duration}}"
+cache.ttl.sliding: "Sliding TTL of {{.Duration}}"
