@@ -95,3 +95,17 @@ Composes with §1.1, §11.4.20, §11.4.70, §11.4.27, §11.4.10, §11.4.71, §10
 **Canonical authority:** constitution submodule `Constitution.md` §11.4.84 for the full mandate.
 
 Non-compliance is a release blocker. A mutation marker that lands in a tagged commit is a critical defect regardless of how briefly it persisted.
+
+## §107 — End-user-usability covenant (verbatim operator mandate, 2026-05-22)
+
+> **Verbatim operator mandate** (2026-05-22, restated for QWEN.md parity per the §11.4.83 cascade requirement):
+>
+> "all existing tests and Challenges do work in anti-bluff manner - they MUST confirm that all tested codebase really works as expected! We had been in position that all tests do execute with success and all Challenges as well, but in reality the most of the features does not work and can't be used! This MUST NOT be the case and execution of tests and Challenges MUST guarantee the quality, the completition and full usability by end users of the product! This MUST BE part of Constitution of our project, its CLAUDE.MD and AGENTS.MD if it is not there already, and to be applied to all Submodules's Constitution, CLAUDE.MD and AGENTS.MD as well (if not there already)!"
+
+**Inheritance.** This submodule's consumers (Herald and any other downstream project) inherit the §107 covenant unchanged. The bar for shipping any consumer-visible feature is NOT "tests pass" — it is **"the end user of the binary or library that consumes this submodule can actually use the feature."** Every PASS (unit, integration, gate, Challenge, smoke, e2e) MUST carry positive runtime evidence that the user-visible behaviour works. Metadata-only / configuration-only / "absence-of-error" / grep-only PASS are §11.4 PASS-bluffs and constitute critical defects regardless of how green the summary line looks.
+
+**Evidence responsibility.** §107 evidence inside this submodule is the responsibility of the submodule's own unit + integration tests + Challenges. §107 evidence for a consumer-visible feature that traverses this submodule is the responsibility of the consumer's end-to-end proofs (Herald's `scripts/e2e_bluff_hunt.sh` + the per-feature `docs/qa/<run-id>/` artefact mandated by §11.4.83).
+
+**Canonical authority.** Helix Universal Constitution §11.4 + §11.4.1..§11.4.16 (anti-bluff substrate) and the existing §107 anchor already carried by this submodule's `CONSTITUTION.md`, `CLAUDE.md`, and `AGENTS.md`. This QWEN.md section restates the anchor for Qwen Code session parity per the operator's 2026-05-22 mandate that the §107 covenant MUST appear in every QWEN.md across the Helix-stack inheritance chain.
+
+**Non-compliance is a release blocker.** No `--metadata-only-suffices`, `--green-summary-suffices`, `--coverage-suffices` flag exists.
