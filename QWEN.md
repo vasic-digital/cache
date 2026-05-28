@@ -349,3 +349,13 @@ In autonomous / endless-loop mode (per §11.4.87), the agent MUST minimize opera
 
 **Cascade requirement:** This anchor (verbatim or by `§11.4.101` reference) MUST appear in every owned submodule's `CONSTITUTION.md`, `CLAUDE.md`, and `AGENTS.md`. Propagation gate `CM-COVENANT-114-101-PROPAGATION`; paired mutation strips the literal → gate FAILs. Release blocker.
 **Canonical authority:** constitution submodule `Constitution.md` §11.4.101 for the full mandate.
+
+## Inherited covenant restatements — Helix §11.4.98 + §11.4.99
+
+### §11.4.98 — Full-Automation Anti-Bluff (Helix, 2026-05-28)
+
+Every test MUST self-drive end-to-end with NO human action during execution. Manual-action tests = §11.4 PASS-bluff. Single exception: one-time credential bootstrap OUTSIDE test execution. Concrete: no "operator MUST type" prompts; no dev-session-UUID collisions; no 60s human-response windows; PASS at `-count=3` self-cleaning. Composes with §11.4.85+89+87+94. Canonical: HelixConstitution §11.4.98. Release blocker.
+
+### §11.4.99 — Latest-Source Documentation Cross-Reference (Helix, 2026-05-28)
+
+Every operator-facing instruction MUST be cross-referenced against LATEST official online docs BEFORE commit (NEVER training data). Cite source URL+date in `## Sources verified` doc footer AND commit footer. Negative findings documented. Staleness: 6-month default, 90-day for risk-classified services (messengers/cloud/payment/AI-LLM/code-hosting/package-managers). Composes with §11.4.92 Pass 4 INDEPENDENT. Inheritance per §11.4.35, literal `11.4.99`. Enforcement: missing-footer BLOCKED; stale → §11.4.90 Obsolete. Canonical: HelixConstitution §11.4.99. Release blocker.
