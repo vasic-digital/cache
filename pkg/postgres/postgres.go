@@ -82,17 +82,17 @@ func DefaultConfig() *Config {
 //
 // Concurrency: all methods are safe for use by multiple goroutines.
 type Client struct {
-	pool        *pgxpool.Pool
-	ownsPool    bool // true when ConnectFromURL created the pool
-	schema      string
-	table       string
-	qualified   string // "schema"."table"
-	gcInterval  time.Duration
-	gcBatch     int
-	gcCancel    context.CancelFunc
-	gcWG        sync.WaitGroup
-	mu          sync.Mutex
-	closed      bool
+	pool       *pgxpool.Pool
+	ownsPool   bool // true when ConnectFromURL created the pool
+	schema     string
+	table      string
+	qualified  string // "schema"."table"
+	gcInterval time.Duration
+	gcBatch    int
+	gcCancel   context.CancelFunc
+	gcWG       sync.WaitGroup
+	mu         sync.Mutex
+	closed     bool
 }
 
 // New constructs a Client from a Config. Validates the config but does
@@ -215,18 +215,37 @@ func (c *Client) Get(ctx context.Context, key string) ([]byte, error) {
 
 // Set stores a value with the given TTL. A zero TTL means the entry
 // does not expire (expires_at is NULL).
+//
+// expires_at is computed SERVER-SIDE — `now() + <ttl> milliseconds` —
+// so the expiry boundary and the `now()` compared by Get/Exists live in
+// the SAME clock domain (the PostgreSQL server's). Computing the boundary
+// from the Go process wall clock (time.Now().Add(ttl)) is a clock-domain
+// bug: when the PG server clock and the Go client clock are skewed (common
+// when PG runs in a container while the client runs on the host), a finite
+// TTL shorter than the skew makes the row appear already-expired on an
+// immediate read. The interval is built from an integer-millisecond
+// parameter via make_interval so the TTL value itself is parameterised
+// (no string interpolation of caller-influenced data).
 func (c *Client) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	if ttl > 0 {
+		q := fmt.Sprintf(`INSERT INTO %s (cache_key, value, expires_at)
+			VALUES ($1, $2, now() + make_interval(secs => $3::double precision))
+			ON CONFLICT (cache_key) DO UPDATE
+				SET value = EXCLUDED.value,
+				    expires_at = EXCLUDED.expires_at`, c.qualified)
+		secs := ttl.Seconds()
+		if _, err := c.pool.Exec(ctx, q, key, value, secs); err != nil {
+			return fmt.Errorf("postgres: set %q: %w", key, err)
+		}
+		return nil
+	}
+	// Zero TTL: never expires (expires_at stays NULL).
 	q := fmt.Sprintf(`INSERT INTO %s (cache_key, value, expires_at)
-		VALUES ($1, $2, $3)
+		VALUES ($1, $2, NULL)
 		ON CONFLICT (cache_key) DO UPDATE
 			SET value = EXCLUDED.value,
 			    expires_at = EXCLUDED.expires_at`, c.qualified)
-	var expires *time.Time
-	if ttl > 0 {
-		t := time.Now().Add(ttl)
-		expires = &t
-	}
-	if _, err := c.pool.Exec(ctx, q, key, value, expires); err != nil {
+	if _, err := c.pool.Exec(ctx, q, key, value); err != nil {
 		return fmt.Errorf("postgres: set %q: %w", key, err)
 	}
 	return nil

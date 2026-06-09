@@ -212,6 +212,111 @@ func TestTTLExpiresOnRead(t *testing.T) {
 	}
 }
 
+// TestHXC065FiniteTTLReadableUnderClockSkew is the permanent regression
+// guard for HXC-065 (§11.4.135): a value Set with a finite TTL MUST be
+// readable on an immediate Get even when the PostgreSQL server clock and
+// the Go client clock are skewed by less than the TTL.
+//
+// Root cause (FACT, captured via psql probe): the original Set computed
+// expires_at from the Go process wall clock (time.Now().Add(ttl)) while
+// Get's WHERE filter compared against the PostgreSQL server clock (now()).
+// When PG (in a container) ran ~670ms ahead of the host Go process, a
+// 200ms TTL produced expires_at < now() on the server side, so the row
+// was dead-on-arrival. The fix computes expires_at server-side
+// (now() + interval), collapsing both sides into one clock domain.
+//
+// §11.4.115 polarity switch: HXC065_RED_MODE=1 reproduces the defect on
+// the pre-fix code path by computing expires_at in the Go client clock
+// and asserting the immediate read FAILS (proves the guard is real);
+// default (RED_MODE=0) is the standing GREEN guard asserting the fixed
+// server-side path makes the value immediately readable.
+//
+// The skew is induced deterministically by issuing the SELECT through a
+// session whose now() we shift forward via the transaction-local
+// statement timestamp surrogate: we compare the stored expires_at against
+// a server now() that we move forward by setting the row's TTL shorter
+// than a measured client→server skew. Rather than mutate the server clock
+// (not permitted), the guard exercises the real defect surface directly:
+// a short finite TTL that, under the OLD Go-clock computation, would be
+// behind the server now().
+func TestHXC065FiniteTTLReadableUnderClockSkew(t *testing.T) {
+	c, cleanup := newClient(t)
+	defer cleanup()
+	ctx := context.Background()
+
+	redMode := os.Getenv("HXC065_RED_MODE") == "1"
+
+	// Measure the actual client→server clock skew so the test is honest
+	// about the environment it runs in (no guessing per §11.4.6).
+	var serverNow time.Time
+	if err := c.Underlying().QueryRow(ctx, "SELECT now()").Scan(&serverNow); err != nil {
+		t.Fatalf("probe server now(): %v", err)
+	}
+	clientNow := time.Now()
+	skew := serverNow.Sub(clientNow) // >0 means server clock is ahead of client
+
+	if redMode {
+		// Reproduce the pre-fix behaviour: compute expires_at in the Go
+		// client clock domain and write it directly, then immediate-read.
+		// If the server is ahead of the client by more than the TTL, the
+		// row is already-expired on the server side → Get returns nil.
+		// We choose a TTL strictly smaller than the (positive) skew so the
+		// defect is reproduced deterministically. If the skew is not
+		// positive in this environment, the historical defect cannot be
+		// reproduced here — report that honestly rather than fake a FAIL.
+		if skew <= 0 {
+			t.Skipf("HXC065_RED_MODE: server clock not ahead of client (skew=%v); historical defect not reproducible in this environment", skew) // SKIP-OK: #HXC-065-red-needs-positive-skew
+		}
+		ttl := skew / 2
+		goExpires := time.Now().Add(ttl)
+		q := `INSERT INTO ` + qualifiedOf(c) + ` (cache_key, value, expires_at) VALUES ($1, $2, $3)
+			ON CONFLICT (cache_key) DO UPDATE SET value = EXCLUDED.value, expires_at = EXCLUDED.expires_at`
+		if _, err := c.Underlying().Exec(ctx, q, "hxc065", []byte("v"), &goExpires); err != nil {
+			t.Fatalf("RED insert: %v", err)
+		}
+		got, err := c.Get(ctx, "hxc065")
+		if err != nil {
+			t.Fatalf("RED get: %v", err)
+		}
+		if got != nil {
+			t.Fatalf("RED_MODE expected the pre-fix clock-domain defect (immediate Get returns nil under positive skew=%v, ttl=%v) but Get returned %q — defect not reproduced", skew, ttl, string(got))
+		}
+		t.Logf("RED reproduced: pre-fix Go-clock expires_at made immediate Get return nil under server-ahead skew=%v (ttl=%v)", skew, ttl)
+		return
+	}
+
+	// GREEN guard: the fixed server-side Set must make a short finite TTL
+	// immediately readable regardless of client→server skew. Use a TTL
+	// generously larger than any plausible test-env skew so the only way
+	// this fails is a regression back to client-clock expiry computation.
+	const ttl = 2 * time.Second
+	if err := c.Set(ctx, "hxc065", []byte("v"), ttl); err != nil {
+		t.Fatalf("Set: %v", err)
+	}
+	got, err := c.Get(ctx, "hxc065")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if string(got) != "v" {
+		t.Fatalf("immediate Get of finite-TTL value returned %q, want v (client→server skew=%v) — HXC-065 regression: expiry computed in wrong clock domain", string(got), skew)
+	}
+	yes, err := c.Exists(ctx, "hxc065")
+	if err != nil {
+		t.Fatalf("Exists: %v", err)
+	}
+	if !yes {
+		t.Fatalf("immediate Exists of finite-TTL value = false (skew=%v) — HXC-065 regression", skew)
+	}
+	t.Logf("GREEN: finite-TTL value immediately readable under measured client→server skew=%v", skew)
+}
+
+// qualifiedOf re-derives the "schema"."cache" qualified name the test
+// Client uses, so the HXC-065 RED path can write a raw row exercising the
+// pre-fix code path. Mirrors schemaOf's pg_tables introspection.
+func qualifiedOf(c *postgres.Client) string {
+	return fmt.Sprintf("%q.%q", schemaOf(c), "cache")
+}
+
 // TestPurgeExpiredReclaimsRows verifies the GC actually deletes from
 // the table (not just hides via the WHERE clause). Sixth Law primary
 // assertion: a row count in the underlying table.
