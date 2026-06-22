@@ -53,7 +53,7 @@ summary line looks. No false-success results are tolerable.
 
 This anchor is the same text the existing CLAUDE.md and AGENTS.md carry —
 QWEN.md was added later in the propagation cycle and gains parity here.
-For the full ruleset (Lava Sixth + Seventh Laws inheritance, the per-clause
+For the full ruleset (the consuming project's Sixth + Seventh Laws inheritance, the per-clause
 enforcement detail) see this submodule's `CLAUDE.md` and the parent
 `CONSTITUTION.md`.
 

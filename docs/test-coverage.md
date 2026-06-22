@@ -20,12 +20,12 @@ A row may be `covered`, `planned`, or `n/a (out of scope for a library of this s
 | Scaling          | covered  | `challenges/scripts/scaling_horizontal_challenge.sh`                                                              | Multi-process / multi-backend scaling probe. |
 | Chaos            | covered  | `challenges/scripts/chaos_failure_injection_challenge.sh`                                                         | Failure injection — backend kill, partial-network — exercised against memory + redis backends. |
 | Stress           | covered  | `pkg/memory/stress_test.go` + `challenges/scripts/stress_sustained_load_challenge.sh`                              | In-process stress on the memory backend (eviction churn under sustained Set/Get); script-driven sustained-load probe. |
-| Performance      | planned  | recommend: `BenchmarkMemoryCache_Set`, `BenchmarkMemoryCache_Get`, `BenchmarkRedis_Set`, `BenchmarkTwoLevel_Get` with `b.ReportAllocs()` + historical p95 drift | Pure-CPU + adapter benchmarks; macro-benchmark embedded inside HelixCode profile runs. |
+| Performance      | planned  | recommend: `BenchmarkMemoryCache_Set`, `BenchmarkMemoryCache_Get`, `BenchmarkRedis_Set`, `BenchmarkTwoLevel_Get` with `b.ReportAllocs()` + historical p95 drift | Pure-CPU + adapter benchmarks; macro-benchmark embedded inside the project's profile runs. |
 | Benchmarking     | planned  | recommend: micro-benchmarks listed above + per-policy benchmark (`BenchmarkFixedTTL`, `BenchmarkSlidingTTL`, `BenchmarkAdaptiveTTL`) | Bench tier; not yet wired into Makefile target. |
 | UI               | n/a      | —                                                                                                                | Cache ships no UI surface. |
 | UX               | covered  | `challenges/scripts/ux_end_to_end_flow_challenge.sh` + bilingual locale verification inside `challenges/cache_describe_challenge.sh` | UX dimension Cache actually owns: do bilingual-payload roundtrips preserve byte-equality + does the cross-locale sanity check rule out NoopTranslator regression. Both asserted by round-242 runner. |
 | Challenges       | covered  | `challenges/cache_describe_challenge.sh` (round 242) + 11 `challenges/scripts/` entries                            | Incorporates the `vasic-digital/Challenges` pattern; captures stdout/stderr as wire evidence per §11.4.2; paired mutation per §1.1 / CONST-055 meta-test. Round-242 entry is the canonical anti-bluff floor. |
-| HelixQA          | planned  | recommend: register Cache as a target in HelixQA's autonomous QA bank                                              | HelixQA submodule (`HelixDevelopment/HelixQA`) is incorporated at HelixCode root per CONST-050; Cache enrolment is a HelixCode-meta-repo task, not a Cache-internal task (CONST-051(B) decoupling). |
+| HelixQA          | planned  | recommend: register Cache as a target in HelixQA's autonomous QA bank                                              | HelixQA submodule (`HelixDevelopment/HelixQA`) is incorporated at the project root per CONST-050; Cache enrolment is a project-meta-repo task, not a Cache-internal task (CONST-051(B) decoupling). |
 
 ---
 
@@ -77,6 +77,6 @@ Round-242 covers the in-process memory + policy slice. Future rounds extend the 
 
 ## Owner / Cadence
 
-- **Owner**: Cache submodule maintainer (vasic-digital). HelixCode consumers MAY contribute upstream but MUST NOT inject HelixCode-specific context (CONST-051(B)).
+- **Owner**: Cache submodule maintainer (vasic-digital). The project's consumers MAY contribute upstream but MUST NOT inject project-specific context (CONST-051(B)).
 - **Cadence**: ledger reviewed at every governance-cascade round; planned → covered transitions land as their own commits with verbatim mandate quotes per CONST-049 §11.4.17.
 - **Round 242 (2026-05-19)**: opened this document. Round-242 deliverables: `challenges/cache_describe_challenge.sh` + `challenges/runner/main.go` + `challenges/fixtures/{en,sr-Latn}.yaml` + this coverage ledger + README enrichment.

@@ -129,4 +129,4 @@ Adding new runtime dependencies requires strong justification. The module must r
 
 ## Module Boundary
 
-This module (`digital.vasic.cache`) must have zero imports from HelixAgent or any other project-specific code. It is a standalone, generic, reusable library. All contributions must respect this boundary.
+This module (`digital.vasic.cache`) must have zero imports from the consuming project or any other project-specific code. It is a standalone, generic, reusable library. All contributions must respect this boundary.

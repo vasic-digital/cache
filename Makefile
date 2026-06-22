@@ -43,7 +43,7 @@ clean:
 	rm -f coverage.out coverage.html
 	go clean -cache
 
-# Challenges (run from parent HelixAgent project)
+# Challenges (run from the parent project)
 challenge:
 	../challenges/scripts/cache_challenge.sh 2>/dev/null || echo "No challenge script"
 
