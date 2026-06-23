@@ -124,7 +124,7 @@ log "Step 3: bilingual bundle load sanity"
 [[ -s "${SR_FIX}" ]] || fail "missing or empty fixture: ${SR_FIX}"
 grep -q 'cache.state.empty' "${EN_FIX}" || fail "en fixture missing cache.state.empty"
 grep -q 'cache.state.empty' "${SR_FIX}" || fail "sr-Latn fixture missing cache.state.empty"
-printf 'fixtures OK: %s + %s\n' "${EN_FIX}" "${SR_FIX}" | tee "${EVIDENCE_DIR}/04-fixtures.log"
+printf 'fixtures OK: %s + %s\n' "${EN_FIX}" "${SR_FIX}" | tee "${EVIDENCE_DIR}/04-fixtures.log"  # bluff-scan: ok (evidence-echo of state already asserted by grep -q || fail above; set -e active)
 
 # ---------------------------------------------------------------------------
 # Step 4 -- runtime end-to-end: real memory.Cache + policy.FixedTTL
